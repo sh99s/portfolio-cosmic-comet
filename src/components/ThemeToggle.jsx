@@ -5,31 +5,41 @@ import { useState } from "react";
 import { cn } from "../lib/utils";
 
 const ThemeToggle = () => {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  // Initialize with a function to avoid hydration mismatch
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== "undefined") {
+      const storedTheme = localStorage.getItem("theme");
+      return storedTheme !== "light"; // Default to dark unless explicitly set to light
+    }
+    return true; // Default to dark for SSR
+  });
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
+    const prefersDark = storedTheme !== "light"; // Default to dark unless explicitly light
 
-    if (storedTheme === "dark") {
-      setIsDarkMode(true);
+    setIsDarkMode(prefersDark);
+
+    if (prefersDark) {
       document.documentElement.classList.add("dark");
     } else {
-      setIsDarkMode(false);
       document.documentElement.classList.remove("dark");
     }
   }, []);
 
   const toggleTheme = () => {
-    if (isDarkMode) {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-      setIsDarkMode(false);
-    } else {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+
+    if (newDarkMode) {
       document.documentElement.classList.add("dark");
       localStorage.setItem("theme", "dark");
-      setIsDarkMode(true);
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
     }
   };
+
   return (
     <button
       onClick={toggleTheme}
